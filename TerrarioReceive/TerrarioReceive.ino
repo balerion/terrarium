@@ -3,7 +3,7 @@
 //
 //        myData.control bits:
 //        
-//        bit 0:  tells whetherlighting should be on or off, depending on time of day
+//        bit 0:  tells whether lighting should be on or off, depends on time of day
 //        bit 1:  
 //        bit 2:  
 //        bit 3:  
@@ -27,9 +27,9 @@
 #define DHTPIN A0     // what pin we're connected to
 #define DHTTYPE DHT22   // DHT 22  (AM2302)
 
-static int whitePin=9;
+static int whitePin=11;
 static int redPin=10;
-static int bluePin=11;
+static int bluePin=9;
 //static long dimTime=900000L;
 static long dimTime=60000L;
 
@@ -39,6 +39,11 @@ static int lightSpeed=6;
 float whiteBrightness=0;
 float blueBrightness=0;
 float redBrightness=0;
+
+// 0 means on full power, 255 means off. 200 is low power
+float whiteMax = 0;
+float blueMax = 255;
+float redMax = 200;
 
 
 SoftwareSerial mySerial(7, 6);
@@ -180,9 +185,9 @@ void loop() {
       i+=lightSpeed/6;
       if (i>(dimTime/3)) i+=lightSpeed;
     }
-    whiteBrightness = constrain(255-i*255.0/dimTime,0,255);
-    blueBrightness = constrain(255-i*255.0/dimTime,0,255);
-    redBrightness = constrain(255-1.666*i*255.0/dimTime-255.0/dimTime/4,0,255);
+    whiteBrightness = constrain(255-i*255.0/dimTime,whiteMax,255);
+    blueBrightness = constrain(255-i*255.0/dimTime,blueMax,255);
+    redBrightness = constrain(255-1.666*i*255.0/dimTime-255.0/dimTime/4,redMax,255);
     delay(1);
   }
   if ((actData.control & 10000000) == 0) {
@@ -190,17 +195,16 @@ void loop() {
       i-=lightSpeed/6;
       if (i>(dimTime/3)) i-=lightSpeed;
     }
-    whiteBrightness = constrain(255-1.666*i*255.0/dimTime+255.0/dimTime/4,0,255);
-    blueBrightness = constrain(255-2*i*2*255.0/dimTime+255.0/dimTime/2,0,255);
-    redBrightness = constrain(255-i*255.0/dimTime,0,255);
+    whiteBrightness = constrain(255-1.666*i*255.0/dimTime+255.0/dimTime/4,whiteMax,255);
+    blueBrightness = constrain(255-2*i*2*255.0/dimTime+255.0/dimTime/2,blueMax,255);
+    redBrightness = constrain(255-i*255.0/dimTime,redMax,255);
 
     delay(1);
   }
 
   analogWrite(whitePin, whiteBrightness);
-  analogWrite(bluePin, whiteBrightness);
-  analogWrite(redPin, whiteBrightness);
-
+  analogWrite(bluePin, redBrightness);
+  analogWrite(redPin, redBrightness);
 
   //lightStatus=255*i/300.0;
   //if (lightStatus<1000) i++;
