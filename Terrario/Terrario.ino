@@ -1,8 +1,7 @@
-#include <SPI.h>         
+#include <SPI.h>
 #include <Ethernet.h>
 #include <HttpClient.h>
-#include <EthernetUdp.h>
-#include <avr/wdt.h>
+//#include <avr/wdt.h>
 //#include <Xively.h>
 
 
@@ -16,30 +15,31 @@ SoftwareSerial mySerial(A4, A5);
 
 
 
-long commTime=0;
-long commInterval=0;
+long commTime = 0;
+long commInterval = 0;
 
 
-const unsigned long halfhour=1800000;
-const unsigned long spraytime=2000;
+const unsigned long halfhour = 1800000;
+const unsigned long spraytime = 2000;
 
-float i=0;
-int Fuso = 0; //0 per ora solare
+float i = 0;
+int Fuso = -1; //0 per ora solare
 //int Fuso = -1; //-1 per ora legale
-boolean on=false;
-boolean called2=false;
-long timercounter2=0;
-boolean called4=false;
-long timercounter4=0;
-long dimTime=900000L;
-boolean override=false;
+boolean on = false;
+boolean called2 = false;
+long timercounter2 = 0;
+boolean called4 = false;
+long timercounter4 = 0;
+long dimTime = 900000L;
+boolean override = false;
 
-int redLight=3;
-int blueLight=9;
-int whiteLight=6;
+int redLight = 3;
+int blueLight = 9;
+int whiteLight = 6;
 
 byte mac[] = {
-  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
+  0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
+};
 
 unsigned int localPort = 8888;      // local port to listen for UDP packets
 //IPAddress timeServer(193, 204, 114, 232); // time.nist.gov NTP server
@@ -53,7 +53,7 @@ int time[3];
 long second = 0;
 
 
-IPAddress ip(10,0,1,20); // fill in an available IP address on your network here, for manual configuration:
+IPAddress ip(10, 0, 1, 20); // fill in an available IP address on your network here, for manual configuration:
 EthernetClient client; // initialize the library instance:
 long lastConnectionTime = 0;        // last time you connected to the server, in milliseconds
 boolean lastConnected = false;      // state of the connection last time through the main loop
@@ -77,9 +77,9 @@ char bufferValue[bufferSize]; // enough space to store the string we're going to
 
 
 //create object
-SoftEasyTransfer ET; 
+SoftEasyTransfer ET;
 
-struct SEND_DATA_STRUCTURE{
+struct SEND_DATA_STRUCTURE {
   int time0;
   int time1;
   int time2;
@@ -93,15 +93,15 @@ struct SEND_DATA_STRUCTURE{
 SEND_DATA_STRUCTURE mydata;
 
 
-void setup() 
+void setup()
 {
   //wdt_enable(WDTO_4S);
 
   analogReference(INTERNAL);
-  pinMode(2, OUTPUT); 
-  pinMode(4, OUTPUT);     
-  digitalWrite(2,HIGH);
-  digitalWrite(4,HIGH);
+  pinMode(2, OUTPUT);
+  pinMode(4, OUTPUT);
+  digitalWrite(2, HIGH);
+  digitalWrite(4, HIGH);
 
   mySerial.begin(9600);
   //start the library, pass in the data details and the name of the serial port.
@@ -148,10 +148,10 @@ void loop() {
 
 
   //watchdog timer reset
-  //wdt_reset();  
+  //wdt_reset();
 
   // Recuperare l'ora
-  if((millis() - lastNtpRetrievalTime) > retrievalInterval) {
+  if ((millis() - lastNtpRetrievalTime) > retrievalInterval) {
     GetTime();
     lastNtpRetrievalTime=millis(); // wait 20 seconds before asking for the time again
 
@@ -187,12 +187,12 @@ void loop() {
   //}
 
   // Gestione luci
-  if (on && i<dimTime) {
-    i+=1;
+  if (on && i < dimTime) {
+    i += 1;
     delay(1);
   }
-  if (time[0]>=8 && time[0]<=24) {
-    on=true;
+  if (time[0] >= 8 && time[0] <= 24) {
+    on = true;
     mydata.control = (mydata.control & B01111111) | B10000000;
 
     //analogWrite(whiteLight,(255-i*255.0/dimTime));
@@ -200,7 +200,7 @@ void loop() {
     //analogWrite(redLight,(255-i*255.0/dimTime));
   }
   else {
-    on=false; 
+    on = false;
     mydata.control = (mydata.control & B01111111);
 
     //analogWrite(whiteLight,(255-i*255.0/dimTime));
@@ -221,96 +221,96 @@ void loop() {
 
 
   // Gestione umidificazione
-  if (time[1]==1 || time[1]==30) {
-    if (time[0]>=11 && time[0]<=22) {
+  if (time[1] == 1 || time[1] == 30) {
+    if (time[0] >= 11 && time[0] <= 22) {
       spray2(10000);
     }
   }
 
-  if (time[1]==1) {
-    if (time[0]>=11 && time[0]<=22) {
+  if (time[1] == 1) {
+    if (time[0] >= 11 && time[0] <= 22) {
       spray4(10000);
     }
   }
 
 
   //--------- spray override ------------//
-  
+
   if ((mydata.control & B00000100) != 0) {
-    override=true;
-    digitalWrite(4,LOW);
+    override = true;
+    digitalWrite(4, LOW);
   }
 
   if ((mydata.control & B00001000) != 0) {
-    override=true;
-    digitalWrite(2,LOW);
+    override = true;
+    digitalWrite(2, LOW);
   }
 
   if ((mydata.control & B00001100) == 0) {
-    override=false;
+    override = false;
   }
 
 
 
   //--------- spray failsafe checks ---------//
-  
-  if (time[1]!=1 && time[1]!=30 && !override) {
-    digitalWrite(4,HIGH);
-    digitalWrite(2,HIGH);
+
+  if (time[1] != 1 && time[1] != 30 && !override) {
+    digitalWrite(4, HIGH);
+    digitalWrite(2, HIGH);
   }
 
 
   // Communication to other Arduino
-  mydata.time0=time[0];
-  mydata.time1=time[1];
-  mydata.time2=time[2];
+  mydata.time0 = time[0];
+  mydata.time1 = time[1];
+  mydata.time2 = time[2];
 
-  if (millis()-commTime>commInterval) {
+  if (millis() - commTime > commInterval) {
     ET.sendData();
     // give it time to respond
     delay(10);
     ET.receiveData();
 
     //Serial.println(mydata.hum);
-    mydata.ok=false;
-    commTime=millis();
+    mydata.ok = false;
+    commTime = millis();
   }
 
 
   /*spray(4);
-   spray(2); 
-   delay(1800000);
-   
-   spray(2);
-   delay(1800000);*/
+    spray(2);
+    delay(1800000);
+
+    spray(2);
+    delay(1800000);*/
 
   // read the analog sensor:
-  /*int sensorReading = analogRead(A0);   
-   
-   // if there's incoming data from the net connection.
-   // send it out the serial port.  This is for debugging
-   // purposes only:
-   if (client.available()) {
-   char c = client.read();
-   Serial.print(c);
-   }
-   
-   // if there's no net connection, but there was one last time
-   // through the loop, then stop the client:
-   if (!client.connected() && lastConnected) {
-   Serial.println();
-   Serial.println("disconnecting.");
-   client.stop();
-   }
-   
-   // if you're not connected, and ten seconds have passed since
-   // your last connection, then connect again and send data:
-   if(!client.connected() && (millis() - lastConnectionTime > postingInterval)) {
-   sendData(sensorReading);
-   }
-   // store the state of the connection for next time through
-   // the loop:
-   lastConnected = client.connected();*/
+  /*int sensorReading = analogRead(A0);
+
+    // if there's incoming data from the net connection.
+    // send it out the serial port.  This is for debugging
+    // purposes only:
+    if (client.available()) {
+    char c = client.read();
+    Serial.print(c);
+    }
+
+    // if there's no net connection, but there was one last time
+    // through the loop, then stop the client:
+    if (!client.connected() && lastConnected) {
+    Serial.println();
+    Serial.println("disconnecting.");
+    client.stop();
+    }
+
+    // if you're not connected, and ten seconds have passed since
+    // your last connection, then connect again and send data:
+    if(!client.connected() && (millis() - lastConnectionTime > postingInterval)) {
+    sendData(sensorReading);
+    }
+    // store the state of the connection for next time through
+    // the loop:
+    lastConnected = client.connected();*/
 
 
 
@@ -320,17 +320,17 @@ void loop() {
 void spray2(int time2) {
 
   if (!called2 | override) {
-    timercounter2=millis();
+    timercounter2 = millis();
   }
-  if ((millis()-timercounter2)<time2) {
-    digitalWrite(2,LOW);
-    called2=true;    
+  if ((millis() - timercounter2) < time2) {
+    digitalWrite(2, LOW);
+    called2 = true;
   }
   else {
-    digitalWrite(2,HIGH);
+    digitalWrite(2, HIGH);
   }
-  if ((millis()-timercounter2)>300000) {
-    called2=false;
+  if ((millis() - timercounter2) > 300000) {
+    called2 = false;
   }
 }
 
@@ -338,17 +338,17 @@ void spray4(int time4) {
 
   if (!called4 | override) {
     Serial.println(override);
-    timercounter4=millis();
+    timercounter4 = millis();
   }
-  if ((millis()-timercounter4)<time4) {
-    digitalWrite(4,LOW);
-    called4=true;    
+  if ((millis() - timercounter4) < time4) {
+    digitalWrite(4, LOW);
+    called4 = true;
   }
   else {
-    digitalWrite(4,HIGH);
+    digitalWrite(4, HIGH);
   }
-  if ((millis()-timercounter4)>300000) {
-    called4=false;
+  if ((millis() - timercounter4) > 300000) {
+    called4 = false;
   }
 }
 
@@ -356,38 +356,39 @@ void spray4(int time4) {
 void GetTime() {
   sendNTPpacket(timeServer); // send an NTP packet to a time server
 
-    // wait to see if a reply is available
-  delay(1000);  
-  if ( Udp.parsePacket() ) {  
+  // wait to see if a reply is available
+  delay(1000);
+  if ( Udp.parsePacket() ) {
+
     // We've received a packet, read the data from it
-    Udp.read(packetBuffer,NTP_PACKET_SIZE);  // read the packet into the buffer
+    Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
     //the timestamp starts at byte 40 of the received packet and is four bytes,
     // or two words, long. First, esxtract the two words:
 
     unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);  
+    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
     // combine the four bytes (two words) into a long integer
     // this is NTP time (seconds since Jan 1 1900):
-    unsigned long secsSince1900 = highWord << 16 | lowWord;              
+    unsigned long secsSince1900 = highWord << 16 | lowWord;
 
     // now convert NTP time into everyday time:
     // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-    const unsigned long seventyYears = 2208988800UL;     
+    const unsigned long seventyYears = 2208988800UL;
     // subtract seventy years:
-    unsigned long epoch = secsSince1900 - seventyYears;  
+    unsigned long epoch = secsSince1900 - seventyYears;
 
-    epoch+=7200;
+    epoch += 7200;
     time[0] = (epoch  % 86400L) / 3600; // hours
     time[1] = (epoch  % 3600) / 60;     // minutes
     time[2] = epoch % 60;               // seconds
 
     // Fuso orario
     if (time[0] >= (-Fuso)) {
-      time[0]+=Fuso;
+      time[0] += Fuso;
     }
     else {
-      time[0]=time[0]+24+Fuso;
+      time[0] = time[0] + 24 + Fuso;
     }
 
   }
@@ -397,11 +398,11 @@ void GetTime() {
 
 }
 
-// send an NTP request to the time server at the given address 
+// send an NTP request to the time server at the given address
 unsigned long sendNTPpacket(IPAddress& address)
 {
   // set all bytes in the buffer to 0
-  memset(packetBuffer, 0, NTP_PACKET_SIZE); 
+  memset(packetBuffer, 0, NTP_PACKET_SIZE);
   // Initialize values needed to form NTP request
   // (see URL above for details on the packets)
   packetBuffer[0] = 0b11100011;   // LI, Version, Mode
@@ -409,16 +410,20 @@ unsigned long sendNTPpacket(IPAddress& address)
   packetBuffer[2] = 6;     // Polling Interval
   packetBuffer[3] = 0xEC;  // Peer Clock Precision
   // 8 bytes of zero for Root Delay & Root Dispersion
-  packetBuffer[12]  = 49; 
+  packetBuffer[12]  = 49;
   packetBuffer[13]  = 0x4E;
   packetBuffer[14]  = 49;
   packetBuffer[15]  = 52;
 
   // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp: 		   
-  Udp.beginPacket(address, 123); //NTP requests are to port 123
-  Udp.write(packetBuffer,NTP_PACKET_SIZE);
-  Udp.endPacket(); 
+  // you can send a packet requesting a timestamp:
+  if (Udp.beginPacket(address, 123) == 1) {
+    Udp.write(packetBuffer, NTP_PACKET_SIZE);
+    if (Udp.endPacket() != 1) Serial.println(F("Send error"));
+  }
+  else {
+    Serial.println(F("Socket error"));
+  }
 }
 
 // this method makes a HTTP connection to the server:
@@ -426,7 +431,7 @@ unsigned long sendNTPpacket(IPAddress& address)
 //  // if there's a successful connection:
 //  if (client.connect("www.pachube.com", 80)) {
 //    Serial.println("connecting...");
-//    // send the HTTP PUT request. 
+//    // send the HTTP PUT request.
 //    // fill in your feed address here:
 //    client.print("PUT /api/YOUR_FEED_HERE.csv HTTP/1.1\n");
 //    client.print("Host: www.pachube.com\n");
@@ -447,7 +452,7 @@ unsigned long sendNTPpacket(IPAddress& address)
 //
 //    // note the time that the connection was made:
 //    lastConnectionTime = millis();
-//  } 
+//  }
 //  else {
 //    // if you couldn't make a connection:
 //    Serial.println("connection failed");
@@ -463,12 +468,12 @@ unsigned long sendNTPpacket(IPAddress& address)
 int getLength(int someValue) {
   // there's at least one byte:
   int digits = 1;
-  // continually divide the value by ten, 
+  // continually divide the value by ten,
   // adding one to the digit count for each
   // time you divide, until you're at 0:
-  int dividend = someValue /10;
+  int dividend = someValue / 10;
   while (dividend > 0) {
-    dividend = dividend /10;
+    dividend = dividend / 10;
     digits++;
   }
   // return the number of digits:
@@ -477,15 +482,15 @@ int getLength(int someValue) {
 
 
 void updateTime() {
-  if ((millis() - second)>1000) {
+  if ((millis() - second) > 1000) {
     time[2] ++;
-    if (time[2]>59) {
+    if (time[2] > 59) {
       time[2] = 0;
       time[1] ++;
-      if (time[1]>59) {
+      if (time[1] > 59) {
         time[1] = 0;
         time[0] ++;
-        if (time[0]>23) {
+        if (time[0] > 23) {
           time[0] = 0;
         }
       }
