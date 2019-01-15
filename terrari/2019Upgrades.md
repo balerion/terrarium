@@ -2,8 +2,7 @@
 
 **Acquario - Generic:**
 - [ ] sistemare plastica blu sfondo
-- [ ] impianto H2O reverse osmosis: elettrovalvola con timer, check efficiency
-https://www.amazon.de/gp/product/B002PLXR8E/ref=ox_sc_act_title_1?smid=A3JWKAKR8XB7XF&psc=1
+- [ ] impianto H2O reverse osmosis: elettrovalvola con [timer](https://www.amazon.de/gp/product/B002PLXR8E/ref=ox_sc_act_title_1?smid=A3JWKAKR8XB7XF&psc=1), check efficiency
 
 **Luci:**
 - [ ] LED (full spectrum, [6500K](https://www.ebay.it/itm/10pcs-3W-High-Power-cool-White-6000-6500K-LED-Beads-Lamp-diodes-260-280Lm-F-DIY/231586171186?hash=item35eb9c8932:g:PooAAOSwBLlVc8ZN:rk:29:pf:0), blu)
