@@ -3,16 +3,9 @@
 #include <HttpClient.h>
 //#include <avr/wdt.h>
 //#include <Xively.h>
-
-
 #include <SoftEasyTransfer.h>
-
 #include <SoftwareSerial.h>
 SoftwareSerial mySerial(A4, A5);
-
-
-
-
 
 
 long commTime = 0;
