@@ -16,14 +16,14 @@ SoftwareSerial mySerial(A4, A5);
 
 
 long commTime = 0;
-long commInterval = 0;
+long commInterval = 10;
 
 
 const unsigned long halfhour = 1800000;
 const unsigned long spraytime = 2000;
 
 float i = 0;
-int Fuso = -1; //0 per ora solare
+int Fuso = 0; //0 per ora solare
 //int Fuso = -1; //-1 per ora legale
 boolean on = false;
 boolean called2 = false;
