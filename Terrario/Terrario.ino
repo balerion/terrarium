@@ -1,6 +1,6 @@
-#include <SPI.h>
-#include <Ethernet.h>
-#include <HttpClient.h>
+//#include <SPI.h>
+//#include <Ethernet.h>
+//#include <HttpClient.h>
 #include <ArduinoJson.h>
 //#include <avr/wdt.h>
 //#include <Xively.h>
@@ -35,27 +35,27 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 
-unsigned int localPort = 8888;      // local port to listen for UDP packets
+//unsigned int localPort = 8888;      // local port to listen for UDP packets
 //IPAddress timeServer(193, 204, 114, 232); // time.nist.gov NTP server
-IPAddress timeServer(216,239,35,8); // time.google.com NTP server
-const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
-byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets 
-EthernetUDP Udp; // A UDP instance to let us send and receive packets over UDP
+//IPAddress timeServer(216,239,35,8); // time.google.com NTP server
+//const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
+//byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
+//EthernetUDP Udp; // A UDP instance to let us send and receive packets over UDP
 long lastNtpRetrievalTime = 0;        // last time you connected to the NTP server, in milliseconds
 const int retrievalInterval = 20000;  //delay between updates to NTP server
 int time[3];
 long second = 0;
 
 
-IPAddress ip(10, 0, 1, 20); // fill in an available IP address on your network here, for manual configuration:
-EthernetClient client; // initialize the library instance:
-long lastConnectionTime = 0;        // last time you connected to the server, in milliseconds
-boolean lastConnected = false;      // state of the connection last time through the main loop
-const int postingInterval = 15000;  //delay between updates to Pachube.com
+//IPAddress ip(10, 0, 1, 20); // fill in an available IP address on your network here, for manual configuration:
+//EthernetClient client; // initialize the library instance:
+//long lastConnectionTime = 0;        // last time you connected to the server, in milliseconds
+//boolean lastConnected = false;      // state of the connection last time through the main loop
+//const int postingInterval = 15000;  //delay between updates to Pachube.com
 
 
 // Your Xively key to let you upload data
-char xivelyKey[] = "h5nlzsKtBl7r2nKQUQtP22Vh4W3SrNaReYnFGf7TLi6pLyez";
+//char xivelyKey[] = "h5nlzsKtBl7r2nKQUQtP22Vh4W3SrNaReYnFGf7TLi6pLyez";
 // Define the strings for our datastream IDs
 char tempID[] = "Temperature";
 char humID[] = "Humidity";
@@ -142,27 +142,27 @@ void loop() {
     long timeRPI = doc["time"];
     double latitude = doc["data"][0];
     double longitude = doc["data"][1];
-//    Serial.println(time);
+    //    Serial.println(time);
 
-//    byte test = Serial.parseInt();
+    //    byte test = Serial.parseInt();
 
-    time[0] = (timeRPI  % 86400L) / 3600; // hours
-    time[1] = (timeRPI  % 3600) / 60;     // minutes
-    time[2] = timeRPI % 60;               // seconds
+    time[0] = ((timeRPI + 7200)  % 86400L) / 3600; // hours
+    time[1] = ((timeRPI + 7200)  % 3600) / 60;   // minutes
+    time[2] = (timeRPI + 7200) % 60;             // seconds
 
 
     byte test = int(longitude) & B00001111;
 
-//    if (Serial.read() == '\n') {
-      Serial.print(test);
-      Serial.print(", ");
-      Serial.print(test, BIN);
-      mydata.control = (mydata.control & B11110000);
-      mydata.control = (mydata.control | test);
-      Serial.print(", ");
-      Serial.println(mydata.control, BIN);
+    //    if (Serial.read() == '\n') {
+    Serial.print(test);
+    Serial.print(", ");
+    Serial.print(test, BIN);
+    mydata.control = (mydata.control & B11110000);
+    mydata.control = (mydata.control | test);
+    Serial.print(", ");
+    Serial.println(mydata.control, BIN);
 
-//    }
+    //    }
   }
 
 
@@ -171,9 +171,9 @@ void loop() {
   //wdt_reset();
 
   // Recuperare l'ora
-  // if ((millis() - lastNtpRetrievalTime) > retrievalInterval) {
-  //   GetTime();
-  //   lastNtpRetrievalTime=millis(); // wait 20 seconds before asking for the time again
+  if ((millis() - lastNtpRetrievalTime) > retrievalInterval) {
+    //   GetTime();
+    lastNtpRetrievalTime = millis(); // wait 20 seconds before asking for the time again
 
     // Printing retrieved time
     Serial.print(time[0]);
@@ -182,7 +182,7 @@ void loop() {
     Serial.print(":");
     Serial.println(time[2]);
 
-  // }
+  }
   updateTime();
 
   //if((millis() - lastConnectionTime) > postingInterval) {

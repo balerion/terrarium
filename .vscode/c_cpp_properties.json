@@ -30,9 +30,6 @@
             "includePath": [
                 "/home/pi/Documents/arduino-1.8.15/hardware/arduino/avr/cores/arduino",
                 "/home/pi/Documents/arduino-1.8.15/hardware/arduino/avr/variants/eightanaloginputs",
-                "/home/pi/Documents/arduino-1.8.15/hardware/arduino/avr/libraries/SPI/src",
-                "/home/pi/Documents/arduino-1.8.15/libraries/Ethernet/src",
-                "/home/pi/Documents/arduino-1.8.15/libraries/Bridge/src",
                 "/home/pi/Arduino/libraries/ArduinoJson/src",
                 "/home/pi/Documents/arduino-1.8.15/libraries/SoftEasyTransfer",
                 "/home/pi/Documents/arduino-1.8.15/hardware/arduino/avr/libraries/SoftwareSerial/src",

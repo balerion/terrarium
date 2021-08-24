@@ -161,7 +161,7 @@ if __name__ == "__main__":
                 buffer = buffer[buffer.index(b'\n')+1:]  # leave the rest in buffer
             except ValueError:
                 continue  # Go back and keep reading
-            print('buffer=', complete)
+            print('buffer=', complete.decode())
             ascii = buffer.decode('ascii')
             print('ascii=', ascii)
 
