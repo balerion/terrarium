@@ -20,6 +20,7 @@ import os
 import serial
 import time
 import json
+import sched
 from datetime import datetime
 
 
@@ -135,6 +136,7 @@ if __name__ == "__main__":
 
     print('Hit any key, or ESC to exit')
 
+    start = time.time()
     while True:
 
         if kb.kbhit():
@@ -166,4 +168,13 @@ if __name__ == "__main__":
             print('ascii=', ascii)
 
 
+    if time.time() - start >= 60:
+        start = time.time()
+        data["time"] = int(datetime.now().timestamp())
+        data=json.dumps(data)
+        arduino.write(data.encode('ascii'))
+        arduino.flush()
+
     kb.set_normal_term()
+
+
