@@ -149,7 +149,8 @@ if __name__ == "__main__":
             data = {}
             data["sensor"] = "gps"
             data["time"] = int(datetime.now().timestamp())
-            data["data"] = [48.756080,c]
+            data["control"] = c
+            data["data"] = [48.756080,2.34838]
             data=json.dumps(data)
 
             arduino.write(data.encode('ascii'))

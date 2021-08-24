@@ -86,6 +86,14 @@ struct SEND_DATA_STRUCTURE {
 //give a name to the group of data
 SEND_DATA_STRUCTURE mydata;
 
+struct SensorData {
+    const char* sensor;
+    long time;
+    byte control;
+    double data[2];
+};
+SensorData data1;
+
 
 void setup()
 {
@@ -116,16 +124,15 @@ void setup()
   // GetTime();
 }
 
-
 void loop() {
 
 
   //------------- Serial input for overrides   -------------//
   while (Serial.available() > 0) {
 
-    // create json buffer
-    DynamicJsonDocument doc(200);
-    DeserializationError error = deserializeJson(doc, Serial);
+  // create json buffer
+  StaticJsonDocument<200> doc;
+  DeserializationError error = deserializeJson(doc, Serial);
 
     // Test if parsing succeeds.
     if (error) {
@@ -138,20 +145,20 @@ void loop() {
     //
     // Most of the time, you can rely on the implicit casts.
     // In other case, you can do doc["time"].as<long>();
-    const char* sensor = doc["sensor"];
-    long timeRPI = doc["time"];
+    data1.sensor = doc["sensor"];
+    data1.time = doc["time"];
     double latitude = doc["data"][0];
     double longitude = doc["data"][1];
     //    Serial.println(time);
 
     //    byte test = Serial.parseInt();
 
-    time[0] = ((timeRPI + 7200)  % 86400L) / 3600; // hours
-    time[1] = ((timeRPI + 7200)  % 3600) / 60;   // minutes
-    time[2] = (timeRPI + 7200) % 60;             // seconds
+    time[0] = ((data1.time + 7200)  % 86400L) / 3600; // hours
+    time[1] = ((data1.time + 7200)  % 3600) / 60;   // minutes
+    time[2] = (data1.time + 7200) % 60;             // seconds
 
 
-    byte test = int(longitude) & B00001111;
+    byte test = int(data1.control) & B00001111;
 
     //    if (Serial.read() == '\n') {
     Serial.print(test);
@@ -176,12 +183,14 @@ void loop() {
     lastNtpRetrievalTime = millis(); // wait 20 seconds before asking for the time again
 
     // Printing retrieved time
-    Serial.print(time[0]);
-    Serial.print(":");
-    Serial.print(time[1]);
-    Serial.print(":");
-    Serial.println(time[2]);
-
+    StaticJsonDocument<200> doc; 
+    doc["sensor"] = data1.sensor;
+    doc["time"] = data1.time;
+    doc["control"] = data1.control;
+    JsonArray data = doc.createNestedArray("data");
+    data.add(data1.data[0]);
+    data.add(data1.data[1]);
+    serializeJson(doc, Serial);
   }
   updateTime();
 
@@ -503,18 +512,10 @@ int getLength(int someValue) {
 
 void updateTime() {
   if ((millis() - second) > 1000) {
-    time[2] ++;
-    if (time[2] > 59) {
-      time[2] = 0;
-      time[1] ++;
-      if (time[1] > 59) {
-        time[1] = 0;
-        time[0] ++;
-        if (time[0] > 23) {
-          time[0] = 0;
-        }
-      }
-    }
     second = millis();
+    data1.time++;
+    time[0] = ((data1.time + 7200)  % 86400L) / 3600; // hours
+    time[1] = ((data1.time + 7200)  % 3600) / 60;   // minutes
+    time[2] = (data1.time + 7200) % 60;             // seconds
   }
 }
