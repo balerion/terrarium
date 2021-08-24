@@ -106,14 +106,14 @@ void setup()
   Serial.println("Welcome to the Terrarium Interface");
   // start the Ethernet and UDP connections:
   delay(1000);   // give the ethernet module time to boot up:
-  while (Ethernet.begin(mac) != 1)
-  {
-    Serial.println("Error getting IP address via DHCP, trying again...");
-    delay(15000);
-  }
-  Udp.begin(localPort);
+  // while (Ethernet.begin(mac) != 1)
+  // {
+  //   Serial.println("Error getting IP address via DHCP, trying again...");
+  //   delay(15000);
+  // }
+  // Udp.begin(localPort);
 
-  GetTime();
+  // GetTime();
 }
 
 
@@ -139,12 +139,17 @@ void loop() {
     // Most of the time, you can rely on the implicit casts.
     // In other case, you can do doc["time"].as<long>();
     const char* sensor = doc["sensor"];
-    long time = doc["time"];
+    long timeRPI = doc["time"];
     double latitude = doc["data"][0];
     double longitude = doc["data"][1];
 //    Serial.println(time);
 
 //    byte test = Serial.parseInt();
+
+    time[0] = (timeRPI  % 86400L) / 3600; // hours
+    time[1] = (timeRPI  % 3600) / 60;     // minutes
+    time[2] = timeRPI % 60;               // seconds
+
 
     byte test = int(longitude) & B00001111;
 
@@ -166,9 +171,9 @@ void loop() {
   //wdt_reset();
 
   // Recuperare l'ora
-  if ((millis() - lastNtpRetrievalTime) > retrievalInterval) {
-    GetTime();
-    lastNtpRetrievalTime=millis(); // wait 20 seconds before asking for the time again
+  // if ((millis() - lastNtpRetrievalTime) > retrievalInterval) {
+  //   GetTime();
+  //   lastNtpRetrievalTime=millis(); // wait 20 seconds before asking for the time again
 
     // Printing retrieved time
     Serial.print(time[0]);
@@ -177,7 +182,7 @@ void loop() {
     Serial.print(":");
     Serial.println(time[2]);
 
-  }
+  // }
   updateTime();
 
   //if((millis() - lastConnectionTime) > postingInterval) {
@@ -368,78 +373,78 @@ void spray4(int time4) {
 }
 
 
-void GetTime() {
-  sendNTPpacket(timeServer); // send an NTP packet to a time server
+// void GetTime() {
+//   sendNTPpacket(timeServer); // send an NTP packet to a time server
 
-  // wait to see if a reply is available
-  delay(1000);
-  if ( Udp.parsePacket() ) {
+//   // wait to see if a reply is available
+//   delay(1000);
+//   if ( Udp.parsePacket() ) {
 
-    // We've received a packet, read the data from it
-    Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
+//     // We've received a packet, read the data from it
+//     Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
-    //the timestamp starts at byte 40 of the received packet and is four bytes,
-    // or two words, long. First, esxtract the two words:
+//     //the timestamp starts at byte 40 of the received packet and is four bytes,
+//     // or two words, long. First, esxtract the two words:
 
-    unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-    // combine the four bytes (two words) into a long integer
-    // this is NTP time (seconds since Jan 1 1900):
-    unsigned long secsSince1900 = highWord << 16 | lowWord;
+//     unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+//     unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+//     // combine the four bytes (two words) into a long integer
+//     // this is NTP time (seconds since Jan 1 1900):
+//     unsigned long secsSince1900 = highWord << 16 | lowWord;
 
-    // now convert NTP time into everyday time:
-    // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-    const unsigned long seventyYears = 2208988800UL;
-    // subtract seventy years:
-    unsigned long epoch = secsSince1900 - seventyYears;
+//     // now convert NTP time into everyday time:
+//     // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+//     const unsigned long seventyYears = 2208988800UL;
+//     // subtract seventy years:
+//     unsigned long epoch = secsSince1900 - seventyYears;
 
-    epoch += 7200;
-    time[0] = (epoch  % 86400L) / 3600; // hours
-    time[1] = (epoch  % 3600) / 60;     // minutes
-    time[2] = epoch % 60;               // seconds
+//     epoch += 7200;
+//     time[0] = (epoch  % 86400L) / 3600; // hours
+//     time[1] = (epoch  % 3600) / 60;     // minutes
+//     time[2] = epoch % 60;               // seconds
 
-    // Fuso orario
-    if (time[0] >= (-Fuso)) {
-      time[0] += Fuso;
-    }
-    else {
-      time[0] = time[0] + 24 + Fuso;
-    }
+//     // Fuso orario
+//     if (time[0] >= (-Fuso)) {
+//       time[0] += Fuso;
+//     }
+//     else {
+//       time[0] = time[0] + 24 + Fuso;
+//     }
 
-  }
-
-
+//   }
 
 
-}
 
-// send an NTP request to the time server at the given address
-unsigned long sendNTPpacket(IPAddress& address)
-{
-  // set all bytes in the buffer to 0
-  memset(packetBuffer, 0, NTP_PACKET_SIZE);
-  // Initialize values needed to form NTP request
-  // (see URL above for details on the packets)
-  packetBuffer[0] = 0b11100011;   // LI, Version, Mode
-  packetBuffer[1] = 0;     // Stratum, or type of clock
-  packetBuffer[2] = 6;     // Polling Interval
-  packetBuffer[3] = 0xEC;  // Peer Clock Precision
-  // 8 bytes of zero for Root Delay & Root Dispersion
-  packetBuffer[12]  = 49;
-  packetBuffer[13]  = 0x4E;
-  packetBuffer[14]  = 49;
-  packetBuffer[15]  = 52;
 
-  // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp:
-  if (Udp.beginPacket(address, 123) == 1) {
-    Udp.write(packetBuffer, NTP_PACKET_SIZE);
-    if (Udp.endPacket() != 1) Serial.println(F("Send error"));
-  }
-  else {
-    Serial.println(F("Socket error"));
-  }
-}
+// }
+
+// // send an NTP request to the time server at the given address
+// unsigned long sendNTPpacket(IPAddress& address)
+// {
+//   // set all bytes in the buffer to 0
+//   memset(packetBuffer, 0, NTP_PACKET_SIZE);
+//   // Initialize values needed to form NTP request
+//   // (see URL above for details on the packets)
+//   packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+//   packetBuffer[1] = 0;     // Stratum, or type of clock
+//   packetBuffer[2] = 6;     // Polling Interval
+//   packetBuffer[3] = 0xEC;  // Peer Clock Precision
+//   // 8 bytes of zero for Root Delay & Root Dispersion
+//   packetBuffer[12]  = 49;
+//   packetBuffer[13]  = 0x4E;
+//   packetBuffer[14]  = 49;
+//   packetBuffer[15]  = 52;
+
+//   // all NTP fields have been given values, now
+//   // you can send a packet requesting a timestamp:
+//   if (Udp.beginPacket(address, 123) == 1) {
+//     Udp.write(packetBuffer, NTP_PACKET_SIZE);
+//     if (Udp.endPacket() != 1) Serial.println(F("Send error"));
+//   }
+//   else {
+//     Serial.println(F("Socket error"));
+//   }
+// }
 
 // this method makes a HTTP connection to the server:
 //void sendData(int thisData) {
