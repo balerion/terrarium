@@ -19,6 +19,8 @@ GNU General Public License for more details.
 import os
 import serial
 import time
+import json
+from datetime import datetime
 
 
 
@@ -140,15 +142,23 @@ if __name__ == "__main__":
             if ord(c) == 27: # ESC
                 break
             print(f"sending {c.encode('ascii')} to arduino")
-            arduino.write(c.encode('ascii'))
-            arduino.write(b'\n')
+            # arduino.write(c.encode('ascii'))
+            # arduino.write(b'\n')
+            data = {}
+            data["sensor"] = "gps"
+            data["time"] = int(datetime.now().timestamp())
+            data["data"] = [48.756080,c]
+            data=json.dumps(data)
+
+            arduino.write(data.encode('ascii'))
+            arduino.flush()
 
         
         if arduino.in_waiting > 0:
             buffer += arduino.read(arduino.in_waiting)
             try:
-                complete = buffer[:buffer.index(b':')+1]  # get up to '}'
-                buffer = buffer[buffer.index(b':')+1:]  # leave the rest in buffer
+                complete = buffer[:buffer.index(b'\n')+1]  # get up to '}'
+                buffer = buffer[buffer.index(b'\n')+1:]  # leave the rest in buffer
             except ValueError:
                 continue  # Go back and keep reading
             print('buffer=', complete)

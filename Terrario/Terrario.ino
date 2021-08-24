@@ -1,6 +1,7 @@
 #include <SPI.h>
 #include <Ethernet.h>
 #include <HttpClient.h>
+#include <ArduinoJson.h>
 //#include <avr/wdt.h>
 //#include <Xively.h>
 #include <SoftEasyTransfer.h>
@@ -122,11 +123,32 @@ void loop() {
   //------------- Serial input for overrides   -------------//
   while (Serial.available() > 0) {
 
-    byte test = Serial.parseInt();
+    // create json buffer
+    DynamicJsonDocument doc(200);
+    DeserializationError error = deserializeJson(doc, Serial);
 
-    test = test & B00001111;
+    // Test if parsing succeeds.
+    if (error) {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.f_str());
+      return;
+    }
 
-    if (Serial.read() == '\n') {
+    // Fetch values.
+    //
+    // Most of the time, you can rely on the implicit casts.
+    // In other case, you can do doc["time"].as<long>();
+    const char* sensor = doc["sensor"];
+    long time = doc["time"];
+    double latitude = doc["data"][0];
+    double longitude = doc["data"][1];
+//    Serial.println(time);
+
+//    byte test = Serial.parseInt();
+
+    byte test = int(longitude) & B00001111;
+
+//    if (Serial.read() == '\n') {
       Serial.print(test);
       Serial.print(", ");
       Serial.print(test, BIN);
@@ -135,7 +157,7 @@ void loop() {
       Serial.print(", ");
       Serial.println(mydata.control, BIN);
 
-    }
+//    }
   }
 
 
@@ -491,47 +513,3 @@ void updateTime() {
     second = millis();
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
