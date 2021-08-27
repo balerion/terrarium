@@ -158,11 +158,11 @@ if __name__ == "__main__":
         if arduino.in_waiting > 0:
             buffer += arduino.read(arduino.in_waiting)
             try:
-                complete = buffer[buffer.index(b'{'):buffer.index(b'}')+1]  # get up to '}'
-                buffer = buffer[buffer.index(b'}')+1:]  # leave the rest in buffer
+                jsonIn = buffer[buffer.index(b'{'):buffer.index(b'}')+1]  # get up to '}'
+                # buffer = buffer[buffer.index(b'}')+1:]  # leave the rest in buffer
             except ValueError:
                 continue  # Go back and keep reading
-            print('json =', complete.decode())
+            print('json =', jsonIn.decode())
             ascii = buffer.decode('ascii')
             print('buffer =', ascii)
 
