@@ -137,8 +137,8 @@ if __name__ == "__main__":
     print('Hit any key, or ESC to exit')
 
     start = time.time()
+    data = {}
     while True:
-
         if kb.kbhit():
             c = kb.getch()
             if ord(c) == 27: # ESC
@@ -146,35 +146,33 @@ if __name__ == "__main__":
             print(f"sending {c.encode('ascii')} to arduino")
             # arduino.write(c.encode('ascii'))
             # arduino.write(b'\n')
-            data = {}
             data["sensor"] = "gps"
             data["time"] = int(datetime.now().timestamp())
-            data["control"] = c
+            data["control"] = int(c)
             data["data"] = [48.756080,2.34838]
-            data=json.dumps(data)
 
-            arduino.write(data.encode('ascii'))
+            arduino.write(json.dumps(data).encode('ascii'))
             arduino.flush()
 
         
         if arduino.in_waiting > 0:
             buffer += arduino.read(arduino.in_waiting)
             try:
-                complete = buffer[:buffer.index(b'\n')+1]  # get up to '}'
-                buffer = buffer[buffer.index(b'\n')+1:]  # leave the rest in buffer
+                complete = buffer[buffer.index(b'{'):buffer.index(b'}')+1]  # get up to '}'
+                buffer = buffer[buffer.index(b'}')+1:]  # leave the rest in buffer
             except ValueError:
                 continue  # Go back and keep reading
-            print('buffer=', complete.decode())
+            print('json =', complete.decode())
             ascii = buffer.decode('ascii')
-            print('ascii=', ascii)
+            print('buffer =', ascii)
 
 
-    if time.time() - start >= 60:
-        start = time.time()
-        data["time"] = int(datetime.now().timestamp())
-        data=json.dumps(data)
-        arduino.write(data.encode('ascii'))
-        arduino.flush()
+        if time.time() - start >= 60:
+            start = time.time()
+            data["time"] = int(datetime.now().timestamp())
+            # data=json.dumps(data)
+            arduino.write(json.dumps(data).encode('ascii'))
+            arduino.flush()
 
     kb.set_normal_term()
 

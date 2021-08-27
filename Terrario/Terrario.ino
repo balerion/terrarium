@@ -87,10 +87,10 @@ struct SEND_DATA_STRUCTURE {
 SEND_DATA_STRUCTURE mydata;
 
 struct SensorData {
-    const char* sensor;
-    long time;
-    byte control;
-    double data[2];
+  const char* sensor;
+  long time;
+  byte control;
+  double data[2];
 };
 SensorData data1;
 
@@ -130,9 +130,9 @@ void loop() {
   //------------- Serial input for overrides   -------------//
   while (Serial.available() > 0) {
 
-  // create json buffer
-  StaticJsonDocument<200> doc;
-  DeserializationError error = deserializeJson(doc, Serial);
+    // create json buffer
+    StaticJsonDocument<200> doc;
+    DeserializationError error = deserializeJson(doc, Serial);
 
     // Test if parsing succeeds.
     if (error) {
@@ -147,8 +147,9 @@ void loop() {
     // In other case, you can do doc["time"].as<long>();
     data1.sensor = doc["sensor"];
     data1.time = doc["time"];
-    double latitude = doc["data"][0];
-    double longitude = doc["data"][1];
+    data1.control = doc["control"];
+    data1.data[0] = doc["data"][0];
+    data1.data[1] = doc["data"][1];
     //    Serial.println(time);
 
     //    byte test = Serial.parseInt();
@@ -161,6 +162,7 @@ void loop() {
     byte test = int(data1.control) & B00001111;
 
     //    if (Serial.read() == '\n') {
+    serializeJson(doc, Serial);
     Serial.print(test);
     Serial.print(", ");
     Serial.print(test, BIN);
@@ -183,7 +185,7 @@ void loop() {
     lastNtpRetrievalTime = millis(); // wait 20 seconds before asking for the time again
 
     // Printing retrieved time
-    StaticJsonDocument<200> doc; 
+    StaticJsonDocument<200> doc;
     doc["sensor"] = data1.sensor;
     doc["time"] = data1.time;
     doc["control"] = data1.control;
