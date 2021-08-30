@@ -161,7 +161,7 @@ if __name__ == "__main__":
             ascii=''
 
             try:
-                jsonIn = buffer[buffer.index(b'{'):buffer.index(b'}')+1]  # get up to '}'
+                jsonIn = json.loads(buffer[buffer.index(b'{'):buffer.index(b'}')+1])  # get up to '}'
                 buffer = buffer[buffer.index(b'}')+1:]  # leave the rest in buffer
                 jsonIn=jsonIn.decode('ascii')
                 jsonRcvd=True
@@ -180,10 +180,11 @@ if __name__ == "__main__":
                 pass  # Go back and keep reading
             else:
                 continue
-
+            
             print('json =', jsonIn)
             print('ascii =', ascii)
-
+            print('received time: ', datetime.fromtimestamp(jsonIn['time']).time()
+            
         if time.time() - start >= 60:
             start = time.time()
             data["time"] = int(datetime.now().timestamp())

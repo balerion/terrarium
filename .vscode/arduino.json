@@ -1,7 +1,4 @@
 {
-    "configuration": "cpu=8MHzatmega328",
     "board": "arduino:avr:pro",
-    "programmer": "",
-    "port": "/dev/ttyUSB0",
-    "sketch": "Terrario/Terrario.ino"
+    "port": "/dev/ttyUSB0"
 }
