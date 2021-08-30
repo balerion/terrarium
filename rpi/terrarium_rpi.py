@@ -183,8 +183,8 @@ if __name__ == "__main__":
             
             print('json =', jsonIn)
             print('ascii =', ascii)
-            print('received time: ', datetime.fromtimestamp(jsonIn['time']).time()
-            
+            print('received time: ', datetime.fromtimestamp(jsonIn['time']).time())
+
         if time.time() - start >= 60:
             start = time.time()
             data["time"] = int(datetime.now().timestamp())
