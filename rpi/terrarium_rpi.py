@@ -154,18 +154,35 @@ if __name__ == "__main__":
             arduino.write(json.dumps(data).encode('ascii'))
             arduino.flush()
 
-        
+
         if arduino.in_waiting > 0:
             buffer += arduino.read(arduino.in_waiting)
+            jsonIn=''
+            ascii=''
+
             try:
                 jsonIn = buffer[buffer.index(b'{'):buffer.index(b'}')+1]  # get up to '}'
-                # buffer = buffer[buffer.index(b'}')+1:]  # leave the rest in buffer
+                buffer = buffer[buffer.index(b'}')+1:]  # leave the rest in buffer
+                jsonIn=jsonIn.decode('ascii')
+                jsonRcvd=True
             except ValueError:
-                continue  # Go back and keep reading
-            print('json =', jsonIn.decode())
-            ascii = buffer.decode('ascii')
-            print('buffer =', ascii)
+                jsonRcvd=False
+                
+            try:
+                ascii = buffer[:buffer.index(b'\n')]  # get up to '\n'
+                buffer = b''
+                ascii = ascii.decode('ascii')
+                asciiRcvd=True
+            except ValueError:
+                asciiRcvd=False
+            
+            if jsonRcvd or asciiRcvd:
+                pass  # Go back and keep reading
+            else:
+                continue
 
+            print('json =', jsonIn)
+            print('ascii =', ascii)
 
         if time.time() - start >= 60:
             start = time.time()
