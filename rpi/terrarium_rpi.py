@@ -30,6 +30,7 @@ from datetime import datetime
 #     except serial.SerialException:
 #         print ('No serial connection')
 #         time.sleep(2)
+arduino = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=.1)
 
 
 # Windows
