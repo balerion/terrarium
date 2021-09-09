@@ -1,6 +1,7 @@
-#include <SPI.h>
-#include <Ethernet.h>
-#include <HttpClient.h>
+//#include <SPI.h>
+//#include <Ethernet.h>
+//#include <HttpClient.h>
+#include <ArduinoJson.h>
 //#include <avr/wdt.h>
 //#include <Xively.h>
 #include <SoftEasyTransfer.h>
@@ -34,27 +35,27 @@ byte mac[] = {
   0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED
 };
 
-unsigned int localPort = 8888;      // local port to listen for UDP packets
+//unsigned int localPort = 8888;      // local port to listen for UDP packets
 //IPAddress timeServer(193, 204, 114, 232); // time.nist.gov NTP server
-IPAddress timeServer(216,239,35,8); // time.google.com NTP server
-const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
-byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets 
-EthernetUDP Udp; // A UDP instance to let us send and receive packets over UDP
+//IPAddress timeServer(216,239,35,8); // time.google.com NTP server
+//const int NTP_PACKET_SIZE= 48; // NTP time stamp is in the first 48 bytes of the message
+//byte packetBuffer[ NTP_PACKET_SIZE]; //buffer to hold incoming and outgoing packets
+//EthernetUDP Udp; // A UDP instance to let us send and receive packets over UDP
 long lastNtpRetrievalTime = 0;        // last time you connected to the NTP server, in milliseconds
 const int retrievalInterval = 20000;  //delay between updates to NTP server
 int time[3];
 long second = 0;
 
 
-IPAddress ip(10, 0, 1, 20); // fill in an available IP address on your network here, for manual configuration:
-EthernetClient client; // initialize the library instance:
-long lastConnectionTime = 0;        // last time you connected to the server, in milliseconds
-boolean lastConnected = false;      // state of the connection last time through the main loop
-const int postingInterval = 15000;  //delay between updates to Pachube.com
+//IPAddress ip(10, 0, 1, 20); // fill in an available IP address on your network here, for manual configuration:
+//EthernetClient client; // initialize the library instance:
+//long lastConnectionTime = 0;        // last time you connected to the server, in milliseconds
+//boolean lastConnected = false;      // state of the connection last time through the main loop
+//const int postingInterval = 15000;  //delay between updates to Pachube.com
 
 
 // Your Xively key to let you upload data
-char xivelyKey[] = "h5nlzsKtBl7r2nKQUQtP22Vh4W3SrNaReYnFGf7TLi6pLyez";
+//char xivelyKey[] = "h5nlzsKtBl7r2nKQUQtP22Vh4W3SrNaReYnFGf7TLi6pLyez";
 // Define the strings for our datastream IDs
 char tempID[] = "Temperature";
 char humID[] = "Humidity";
@@ -85,6 +86,14 @@ struct SEND_DATA_STRUCTURE {
 //give a name to the group of data
 SEND_DATA_STRUCTURE mydata;
 
+struct SensorData {
+  const char* sensor;
+  long time;
+  byte control;
+  double data[2];
+};
+SensorData data1;
+
 
 void setup()
 {
@@ -105,16 +114,15 @@ void setup()
   Serial.println("Welcome to the Terrarium Interface");
   // start the Ethernet and UDP connections:
   delay(1000);   // give the ethernet module time to boot up:
-  while (Ethernet.begin(mac) != 1)
-  {
-    Serial.println("Error getting IP address via DHCP, trying again...");
-    delay(15000);
-  }
-  Udp.begin(localPort);
+  // while (Ethernet.begin(mac) != 1)
+  // {
+  //   Serial.println("Error getting IP address via DHCP, trying again...");
+  //   delay(15000);
+  // }
+  // Udp.begin(localPort);
 
-  GetTime();
+  // GetTime();
 }
-
 
 void loop() {
 
@@ -122,20 +130,48 @@ void loop() {
   //------------- Serial input for overrides   -------------//
   while (Serial.available() > 0) {
 
-    byte test = Serial.parseInt();
+    // create json buffer
+    StaticJsonDocument<200> doc;
+    DeserializationError error = deserializeJson(doc, Serial);
 
-    test = test & B00001111;
-
-    if (Serial.read() == '\n') {
-      Serial.print(test);
-      Serial.print(", ");
-      Serial.print(test, BIN);
-      mydata.control = (mydata.control & B11110000);
-      mydata.control = (mydata.control | test);
-      Serial.print(", ");
-      Serial.println(mydata.control, BIN);
-
+    // Test if parsing succeeds.
+    if (error) {
+      Serial.print(F("deserializeJson() failed: "));
+      Serial.println(error.f_str());
+      return;
     }
+
+    // Fetch values.
+    //
+    // Most of the time, you can rely on the implicit casts.
+    // In other case, you can do doc["time"].as<long>();
+    data1.sensor = doc["sensor"];
+    data1.time = doc["time"];
+    data1.control = doc["control"];
+    data1.data[0] = doc["data"][0];
+    data1.data[1] = doc["data"][1];
+    //    Serial.println(time);
+
+    //    byte test = Serial.parseInt();
+
+    time[0] = ((data1.time + 7200)  % 86400L) / 3600; // hours
+    time[1] = ((data1.time + 7200)  % 3600) / 60;   // minutes
+    time[2] = (data1.time + 7200) % 60;             // seconds
+
+
+    byte test = int(data1.control) & B00001111;
+
+    //    if (Serial.read() == '\n') {
+    serializeJson(doc, Serial);
+    Serial.print(test);
+    Serial.print(", ");
+    Serial.print(test, BIN);
+    mydata.control = (mydata.control & B11110000);
+    mydata.control = (mydata.control | test);
+    Serial.print(", ");
+    Serial.println(mydata.control, BIN);
+
+    //    }
   }
 
 
@@ -145,16 +181,18 @@ void loop() {
 
   // Recuperare l'ora
   if ((millis() - lastNtpRetrievalTime) > retrievalInterval) {
-    GetTime();
-    lastNtpRetrievalTime=millis(); // wait 20 seconds before asking for the time again
+    //   GetTime();
+    lastNtpRetrievalTime = millis(); // wait 20 seconds before asking for the time again
 
     // Printing retrieved time
-    Serial.print(time[0]);
-    Serial.print(":");
-    Serial.print(time[1]);
-    Serial.print(":");
-    Serial.println(time[2]);
-
+    StaticJsonDocument<200> doc;
+    doc["sensor"] = data1.sensor;
+    doc["time"] = data1.time;
+    doc["control"] = data1.control;
+    JsonArray data = doc.createNestedArray("data");
+    data.add(data1.data[0]);
+    data.add(data1.data[1]);
+    serializeJson(doc, Serial);
   }
   updateTime();
 
@@ -346,78 +384,78 @@ void spray4(int time4) {
 }
 
 
-void GetTime() {
-  sendNTPpacket(timeServer); // send an NTP packet to a time server
+// void GetTime() {
+//   sendNTPpacket(timeServer); // send an NTP packet to a time server
 
-  // wait to see if a reply is available
-  delay(1000);
-  if ( Udp.parsePacket() ) {
+//   // wait to see if a reply is available
+//   delay(1000);
+//   if ( Udp.parsePacket() ) {
 
-    // We've received a packet, read the data from it
-    Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
+//     // We've received a packet, read the data from it
+//     Udp.read(packetBuffer, NTP_PACKET_SIZE); // read the packet into the buffer
 
-    //the timestamp starts at byte 40 of the received packet and is four bytes,
-    // or two words, long. First, esxtract the two words:
+//     //the timestamp starts at byte 40 of the received packet and is four bytes,
+//     // or two words, long. First, esxtract the two words:
 
-    unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
-    unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
-    // combine the four bytes (two words) into a long integer
-    // this is NTP time (seconds since Jan 1 1900):
-    unsigned long secsSince1900 = highWord << 16 | lowWord;
+//     unsigned long highWord = word(packetBuffer[40], packetBuffer[41]);
+//     unsigned long lowWord = word(packetBuffer[42], packetBuffer[43]);
+//     // combine the four bytes (two words) into a long integer
+//     // this is NTP time (seconds since Jan 1 1900):
+//     unsigned long secsSince1900 = highWord << 16 | lowWord;
 
-    // now convert NTP time into everyday time:
-    // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
-    const unsigned long seventyYears = 2208988800UL;
-    // subtract seventy years:
-    unsigned long epoch = secsSince1900 - seventyYears;
+//     // now convert NTP time into everyday time:
+//     // Unix time starts on Jan 1 1970. In seconds, that's 2208988800:
+//     const unsigned long seventyYears = 2208988800UL;
+//     // subtract seventy years:
+//     unsigned long epoch = secsSince1900 - seventyYears;
 
-    epoch += 7200;
-    time[0] = (epoch  % 86400L) / 3600; // hours
-    time[1] = (epoch  % 3600) / 60;     // minutes
-    time[2] = epoch % 60;               // seconds
+//     epoch += 7200;
+//     time[0] = (epoch  % 86400L) / 3600; // hours
+//     time[1] = (epoch  % 3600) / 60;     // minutes
+//     time[2] = epoch % 60;               // seconds
 
-    // Fuso orario
-    if (time[0] >= (-Fuso)) {
-      time[0] += Fuso;
-    }
-    else {
-      time[0] = time[0] + 24 + Fuso;
-    }
+//     // Fuso orario
+//     if (time[0] >= (-Fuso)) {
+//       time[0] += Fuso;
+//     }
+//     else {
+//       time[0] = time[0] + 24 + Fuso;
+//     }
 
-  }
-
-
+//   }
 
 
-}
 
-// send an NTP request to the time server at the given address
-unsigned long sendNTPpacket(IPAddress& address)
-{
-  // set all bytes in the buffer to 0
-  memset(packetBuffer, 0, NTP_PACKET_SIZE);
-  // Initialize values needed to form NTP request
-  // (see URL above for details on the packets)
-  packetBuffer[0] = 0b11100011;   // LI, Version, Mode
-  packetBuffer[1] = 0;     // Stratum, or type of clock
-  packetBuffer[2] = 6;     // Polling Interval
-  packetBuffer[3] = 0xEC;  // Peer Clock Precision
-  // 8 bytes of zero for Root Delay & Root Dispersion
-  packetBuffer[12]  = 49;
-  packetBuffer[13]  = 0x4E;
-  packetBuffer[14]  = 49;
-  packetBuffer[15]  = 52;
 
-  // all NTP fields have been given values, now
-  // you can send a packet requesting a timestamp:
-  if (Udp.beginPacket(address, 123) == 1) {
-    Udp.write(packetBuffer, NTP_PACKET_SIZE);
-    if (Udp.endPacket() != 1) Serial.println(F("Send error"));
-  }
-  else {
-    Serial.println(F("Socket error"));
-  }
-}
+// }
+
+// // send an NTP request to the time server at the given address
+// unsigned long sendNTPpacket(IPAddress& address)
+// {
+//   // set all bytes in the buffer to 0
+//   memset(packetBuffer, 0, NTP_PACKET_SIZE);
+//   // Initialize values needed to form NTP request
+//   // (see URL above for details on the packets)
+//   packetBuffer[0] = 0b11100011;   // LI, Version, Mode
+//   packetBuffer[1] = 0;     // Stratum, or type of clock
+//   packetBuffer[2] = 6;     // Polling Interval
+//   packetBuffer[3] = 0xEC;  // Peer Clock Precision
+//   // 8 bytes of zero for Root Delay & Root Dispersion
+//   packetBuffer[12]  = 49;
+//   packetBuffer[13]  = 0x4E;
+//   packetBuffer[14]  = 49;
+//   packetBuffer[15]  = 52;
+
+//   // all NTP fields have been given values, now
+//   // you can send a packet requesting a timestamp:
+//   if (Udp.beginPacket(address, 123) == 1) {
+//     Udp.write(packetBuffer, NTP_PACKET_SIZE);
+//     if (Udp.endPacket() != 1) Serial.println(F("Send error"));
+//   }
+//   else {
+//     Serial.println(F("Socket error"));
+//   }
+// }
 
 // this method makes a HTTP connection to the server:
 //void sendData(int thisData) {
@@ -476,62 +514,10 @@ int getLength(int someValue) {
 
 void updateTime() {
   if ((millis() - second) > 1000) {
-    time[2] ++;
-    if (time[2] > 59) {
-      time[2] = 0;
-      time[1] ++;
-      if (time[1] > 59) {
-        time[1] = 0;
-        time[0] ++;
-        if (time[0] > 23) {
-          time[0] = 0;
-        }
-      }
-    }
     second = millis();
+    data1.time++;
+    time[0] = ((data1.time + 7200)  % 86400L) / 3600; // hours
+    time[1] = ((data1.time + 7200)  % 3600) / 60;   // minutes
+    time[2] = (data1.time + 7200) % 60;             // seconds
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

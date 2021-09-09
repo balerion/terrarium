@@ -22,5 +22,5 @@
 - [ ] ip camera
 - [ ] [sensore umidità/temp](https://www.adafruit.com/product/3251
 )
-- [ ] [raspberry pi for new internet connection](https://www.amazon.it/ABOX-Raspberry-Barebone-Custodia-Interruttore/dp/B07DC128P2/ref=sr_1_6?ie=UTF8&qid=1547573239&sr=8-6&keywords=raspberry+pi+3+b%2B
+- [x] [raspberry pi for new internet connection](https://www.amazon.it/ABOX-Raspberry-Barebone-Custodia-Interruttore/dp/B07DC128P2/ref=sr_1_6?ie=UTF8&qid=1547573239&sr=8-6&keywords=raspberry+pi+3+b%2B
 )
