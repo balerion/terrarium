@@ -23,10 +23,13 @@ import json
 import sched
 from datetime import datetime
 
-
-
-arduino = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=.1)
-
+# while True:
+#     try:
+#         arduino = serial.Serial(port='/dev/ttyUSB0', baudrate=9600, timeout=.1)
+#         break
+#     except serial.SerialException:
+#         print ('No serial connection')
+#         time.sleep(2)
 
 
 # Windows
@@ -193,6 +196,8 @@ if __name__ == "__main__":
             # data=json.dumps(data)
             arduino.write(json.dumps(data).encode('ascii'))
             arduino.flush()
+
+        time.sleep(0.001)
 
     kb.set_normal_term()
 
