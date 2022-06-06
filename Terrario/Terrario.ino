@@ -258,11 +258,12 @@ void loop() {
     }
   }
 
-  if (time[1] == 1) {
-    if (time[0] >= 11 && time[0] <= 22) {
-      spray4(10000);
-    }
-  }
+// Rimuovere commenti per spruzzare pitonaia
+  // if (time[1] == 1) {
+  //   if (time[0] >= 11 && time[0] <= 22) {
+  //     spray4(10000);
+  //   }
+  // }
 
 
   //--------- spray override ------------//
